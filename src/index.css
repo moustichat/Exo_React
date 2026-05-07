@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Trebuchet MS', 'Gill Sans', 'Aptos', 'Segoe UI', sans-serif;
+    background: transparent;
+    color: #0f172a;
+  }
+
+  html.dark body {
+    background: transparent;
+    color: #e2e8f0;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: rgba(59, 130, 246, 0.22);
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
