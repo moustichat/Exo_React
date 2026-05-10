@@ -37,17 +37,17 @@ export const Home = () => {
           <div className="relative space-y-6">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-600 dark:text-amber-300">Billetterie simple</p>
             <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl">
-              Découvre les prochains évènements et réserve en quelques clics.
+              Découvrez les prochains évènements et réservez en quelques clics.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-              L’accueil affiche un aperçu des évènements. La recherche dédiée te permet de filtrer, trier et trouver ce qui t’intéresse.
+              L’accueil affiche un aperçu des évènements. La recherche dédiée vous permet de filtrer, trier et trouver ce qui vous intéresse.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/search">
                 <Button>Rechercher un évènement</Button>
               </Link>
               {isAuthenticated ? (
-                <Link to="/tickets">
+                <Link to="/account">
                   <Button variant="secondary">Voir mes billets</Button>
                 </Link>
               ) : (

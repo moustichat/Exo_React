@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
+import { TicketsList } from '../components/tickets/TicketsList';
 
 export const Account = () => {
-  const { user, updateProfile, updatePassword } = useAuth();
+  const { user, updateProfile, updatePassword, becomeOrganizer } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
   const [passwordMessage, setPasswordMessage] = useState('');
+  const [organizerMessage, setOrganizerMessage] = useState('');
 
   useEffect(() => {
     setName(user?.name ?? '');
@@ -41,13 +43,30 @@ export const Account = () => {
     }
   };
 
+  const handleBecomeOrganizer = async () => {
+    try {
+      setOrganizerMessage('');
+      await becomeOrganizer();
+      setOrganizerMessage('Ton compte est maintenant en mode organisateur.');
+    } catch (error) {
+      setOrganizerMessage(error instanceof Error ? error.message : 'Impossible de passer en mode organisateur.');
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <section id="tickets">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Mes billets</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">Billets achetés</h1>
+      </section>
+
+      <TicketsList />
+
       <section>
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Paramètres</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-950 dark:text-white">Mon compte</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">
-          Modifie ton nom d’utilisateur et ton mot de passe depuis cette page simple.
+          Modifie ton nom d'utilisateur et ton mot de passe depuis cette page simple.
         </p>
       </section>
 
@@ -66,7 +85,7 @@ export const Account = () => {
 
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Nom d’utilisateur</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Nom d'utilisateur</span>
               <input
                 type="text"
                 value={name}
@@ -125,6 +144,30 @@ export const Account = () => {
             <Button type="submit" variant="secondary">Modifier le mot de passe</Button>
           </form>
         </Card>
+
+        {user?.role === 'USER' && (
+          <Card className="space-y-5">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-950 dark:text-white">Espace organisateur</h2>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Passe ton compte en organisateur pour créer des évènements.
+              </p>
+            </div>
+
+            {organizerMessage && (
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
+                {organizerMessage}
+              </div>
+            )}
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              Active le mode organisateur pour accéder à la création d'événements.
+            </div>
+            <Button type="button" onClick={handleBecomeOrganizer}>
+              Devenir organisateur
+            </Button>
+          </Card>
+        )}
       </div>
     </div>
   );

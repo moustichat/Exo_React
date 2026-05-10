@@ -64,15 +64,16 @@ export const eventService = {
     const response = await fetch('/api/v1/events', {
       credentials: 'include',
     });
-    const events = await readJson<Event[]>(response, 'Failed to fetch events');
-    return filterEvents(events, params);
+    const payload = await readJson<{ success: boolean; data: { events: Event[] } }>(response, 'Failed to fetch events');
+    return filterEvents(payload.data.events, params);
   },
 
   async getById(id: string) {
     const response = await fetch(`/api/v1/events/${id}`, {
       credentials: 'include',
     });
-    return readJson<Event>(response, 'Failed to fetch event');
+    const payload = await readJson<{ success: boolean; data: { event: Event } }>(response, 'Failed to fetch event');
+    return payload.data.event;
   },
 
   async create(data: Partial<Event>) {
@@ -82,7 +83,8 @@ export const eventService = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
-    return readJson(response, 'Failed to create event');
+    const payload = await readJson<{ success: boolean; data: { event: Event } }>(response, 'Failed to create event');
+    return payload.data.event;
   },
 
   async update(id: string, data: Partial<Event>) {
@@ -92,7 +94,8 @@ export const eventService = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
-    return readJson(response, 'Failed to update event');
+    const payload = await readJson<{ success: boolean; data: { event: Event } }>(response, 'Failed to update event');
+    return payload.data.event;
   },
 
   async delete(id: string) {
@@ -100,7 +103,7 @@ export const eventService = {
       method: 'DELETE',
       credentials: 'include',
     });
-    return readJson(response, 'Failed to delete event');
+    await readJson(response, 'Failed to delete event');
   },
 };
 
@@ -109,7 +112,8 @@ export const ticketService = {
     const response = await fetch('/api/v1/users/tickets', {
       credentials: 'include',
     });
-    return readJson<Ticket[]>(response, 'Failed to fetch tickets');
+    const payload = await readJson<{ success: boolean; data: { tickets: Ticket[] } }>(response, 'Failed to fetch tickets');
+    return payload.data.tickets;
   },
 
   async buyTicket(eventId: string, quantity = 1): Promise<Ticket> {
@@ -119,7 +123,8 @@ export const ticketService = {
       credentials: 'include',
       body: JSON.stringify({ eventId, quantity }),
     });
-    return readJson<Ticket>(response, 'Failed to buy tickets');
+    const payload = await readJson<{ success: boolean; data: { ticket: Ticket } }>(response, 'Failed to buy tickets');
+    return payload.data.ticket;
   },
 };
 
@@ -189,6 +194,16 @@ export const authService = {
       method: 'POST',
       credentials: 'include',
     }).catch(() => undefined);
+  },
+
+  async becomeOrganizer() {
+    const response = await fetch('/api/v1/auth/become-organizer', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    const payload = await readJson<{ success: boolean; data: { user: SessionUser } }>(response, 'Impossible de devenir organisateur');
+    return extractUser(payload);
   },
 };
 

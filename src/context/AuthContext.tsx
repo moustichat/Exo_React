@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  becomeOrganizer: () => Promise<void>;
   updateProfile: (payload: { name?: string; email?: string }) => Promise<void>;
   updatePassword: (currentPassword: string, nextPassword: string) => Promise<void>;
 }
@@ -42,6 +43,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const becomeOrganizer = async () => {
+    const session = await authService.becomeOrganizer();
+    setUser(session);
+  };
+
   const updateProfile = async (payload: { name?: string; email?: string }) => {
     const session = await profileService.updateProfile(payload);
     setUser(session);
@@ -52,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, logout, updateProfile, updatePassword }}>
+      <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, logout, becomeOrganizer, updateProfile, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

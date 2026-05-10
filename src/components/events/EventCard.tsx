@@ -19,7 +19,7 @@ function formatDate(dateValue: string) {
 
 export const EventCard = ({ event, compact = false }: EventCardProps) => {
   const seatsAvailable = event.seats_available ?? event.total_seats ?? 0;
-  const seatsTotal = event.total_seats ?? event.capacity ?? seatsAvailable;
+  const seatsTotal = event.total_seats ?? seatsAvailable;
 
   return (
     <Card className={`flex h-full flex-col overflow-hidden ${compact ? 'p-5' : ''}`}>
@@ -31,7 +31,7 @@ export const EventCard = ({ event, compact = false }: EventCardProps) => {
           <h3 className="text-xl font-bold text-slate-950 dark:text-white">{event.title}</h3>
         </div>
         <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white dark:bg-amber-400 dark:text-slate-950">
-          {event.price ?? event.ticketPrice ?? 0} €
+          {event.price ?? 0} €
         </div>
       </div>
 

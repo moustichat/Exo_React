@@ -29,7 +29,8 @@ export const UserTickets = () => {
       }
     };
 
-    if (user.role !== 'USER') {
+    // Allow regular users and organizers/admins to view their tickets
+    if (!['USER', 'ORGANIZER', 'ADMIN'].includes(user.role)) {
       navigate('/');
       return;
     }

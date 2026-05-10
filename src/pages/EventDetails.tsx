@@ -87,15 +87,10 @@ export const EventDetails = () => {
       return;
     }
 
-    if (existingPurchase) {
-      setMessage(`Tu as déjà acheté ${existingPurchase} place${existingPurchase > 1 ? 's' : ''} pour cet événement.`);
-      return;
-    }
-
     try {
-      setMessage('');
       const ticket = await ticketService.buyTicket(event.id, quantity);
-      setMessage(`Billet validé pour ${ticket.quantity} place${ticket.quantity > 1 ? 's' : ''}.`);
+      const purchasedQty = (ticket as any).purchasedQuantity || ticket.quantity;
+      setMessage(`Billet validé pour ${purchasedQty} place${purchasedQty > 1 ? 's' : ''}.`);
       setEvent((currentEvent) => currentEvent
         ? { ...currentEvent, seats_available: Math.max(0, (currentEvent.seats_available ?? 0) - quantity) }
         : currentEvent,
@@ -103,7 +98,7 @@ export const EventDetails = () => {
       setExistingPurchase(ticket.quantity);
       setQuantity(1);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Impossible de valider l’achat.');
+      setMessage(error instanceof Error ? error.message : 'Impossible de valider l\'achat.');
     }
   };
 
@@ -123,8 +118,8 @@ export const EventDetails = () => {
   }
 
   const seatsAvailable = event.seats_available ?? event.total_seats ?? 0;
-  const totalSeats = event.total_seats ?? event.capacity ?? seatsAvailable;
-  const price = event.price ?? event.ticketPrice ?? 0;
+  const totalSeats = event.total_seats ?? seatsAvailable;
+  const price = event.price ?? 0;
 
   return (
     <div className="space-y-8">
@@ -229,7 +224,7 @@ export const EventDetails = () => {
                     size="sm"
                     className="h-10 w-10 p-0 text-lg"
                     onClick={() => setQuantity((current) => Math.min(seatsAvailable, current + 1))}
-                    disabled={quantity >= seatsAvailable || !!existingPurchase}
+                    disabled={quantity >= seatsAvailable}
                     aria-label="Augmenter le nombre de places"
                   >
                     +
@@ -241,7 +236,7 @@ export const EventDetails = () => {
                 Total à payer: <span className="font-bold text-slate-950 dark:text-white">{price * quantity} €</span>
               </div>
 
-              <Button className="w-full" onClick={handlePurchase} disabled={seatsAvailable <= 0 || !!existingPurchase}>
+              <Button className="w-full" onClick={handlePurchase} disabled={seatsAvailable <= 0}>
                 Valider l’achat
               </Button>
             </div>

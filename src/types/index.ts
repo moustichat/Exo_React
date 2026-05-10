@@ -20,8 +20,6 @@ export interface Event {
   picture?: number | null;
   createdAt: string;
   updatedAt: string;
-  capacity?: number;
-  ticketPrice?: number;
 }
 
 export interface Ticket {
