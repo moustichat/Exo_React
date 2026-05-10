@@ -105,6 +105,23 @@ export const eventService = {
     });
     await readJson(response, 'Failed to delete event');
   },
+
+  async getMyEvents() {
+    const response = await fetch('/api/v1/events/my-events', {
+      credentials: 'include',
+    });
+    const payload = await readJson<{ success: boolean; data: { events: Event[] } }>(response, 'Failed to fetch my events');
+    return payload.data.events;
+  },
+
+  async restore(id: string) {
+    const response = await fetch(`/api/v1/events/${id}/restore`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    const payload = await readJson<{ success: boolean; data: { event: Event } }>(response, 'Failed to restore event');
+    return payload.data.event;
+  },
 };
 
 export const ticketService = {
@@ -208,8 +225,7 @@ export const authService = {
 };
 
 export const organizerService = {
-  async getMyEvents(organizerId: string) {
-    const events = await eventService.getAll();
-    return events.filter((event) => event.organizerId === organizerId);
+  async getMyEvents() {
+    return eventService.getMyEvents();
   },
 };

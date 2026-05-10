@@ -22,6 +22,7 @@ export const OrganizerDashboard = () => {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState('');
   const [deleteMessage, setDeleteMessage] = useState('');
+  const [restoreMessage, setRestoreMessage] = useState('');
   
   const getTomorrowNoon = () => {
     const tomorrow = new Date();
@@ -64,12 +65,11 @@ export const OrganizerDashboard = () => {
       return;
     }
 
-    const organizerId = user.id;
     setLoading(true);
 
     const fetchEvents = async () => {
       try {
-        const data = await organizerService.getMyEvents(organizerId);
+        const data = await organizerService.getMyEvents();
         setEvents(data);
       } catch (error) {
         console.error('Failed to fetch events:', error);
@@ -132,7 +132,7 @@ export const OrganizerDashboard = () => {
       });
       setShowForm(false);
 
-      const updatedEvents = await organizerService.getMyEvents(user.id);
+      const updatedEvents = await organizerService.getMyEvents();
       setEvents(updatedEvents);
     } catch (error) {
       setFormMessage(error instanceof Error ? error.message : 'Erreur lors de la sauvegarde.');
@@ -181,22 +181,36 @@ export const OrganizerDashboard = () => {
 
     try {
       setDeleteMessage('');
+      // Optimistic update: mark as deleted immediately
+      setEvents(events.map((e) => e.id === id ? { ...e, isDeleted: true } : e));
       await eventService.delete(id);
-      setEvents(events.filter((e) => e.id !== id));
       setDeleteMessage('Événement supprimé avec succès.');
       setTimeout(() => setDeleteMessage(''), 3000);
     } catch (error) {
       setDeleteMessage(error instanceof Error ? error.message : 'Erreur lors de la suppression.');
+      // Revert optimistic update on error
+      const updatedEvents = await organizerService.getMyEvents();
+      setEvents(updatedEvents);
       console.error('Failed to delete event:', error);
     }
   };
-       //#FEATURE -> il faudrait aussi supprimer les tickets associés à l'événement, soit via une cascade en base, soit via une suppression manuelle ici avant de supprimer l'événement
-       //#FEATURE -> Ajouter un attribut 'valid' pour permettre de le supprimer, mais malgré tout l'afficher dans la liste des événements de l'organisateur,
-       // avec une mention "Cet événement a été supprimé" et en désactivant les boutons d'édition/suppression.
-       // Cela permettrait de garder une trace des événements créés et de leurs tickets associés, même après suppression,
-       // pour éviter les problèmes d'incohérence ou de perte de données.
-       // À terme, il faudrait aussi ajouter une fonctionnalité de "restauration" pour les événements supprimés par erreur, en réactivant simplement l'événement et ses tickets associés.
-       // Il faut qu'il reste une trace dans la BDD, mais que les utilisateurs ne voient plus les événements supprimés, et que les organisateurs puissent les restaurer si besoin.
+
+  const handleRestore = async (id: string) => {
+    try {
+      setRestoreMessage('');
+      await eventService.restore(id);
+      const event = events.find((e) => e.id === id);
+      if (event) {
+        event.isDeleted = false;
+        setEvents([...events]);
+      }
+      setRestoreMessage('Événement restauré avec succès.');
+      setTimeout(() => setRestoreMessage(''), 3000);
+    } catch (error) {
+      setRestoreMessage(error instanceof Error ? error.message : 'Erreur lors de la restauration.');
+      console.error('Failed to restore event:', error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -348,6 +362,12 @@ export const OrganizerDashboard = () => {
         </div>
       )}
 
+      {restoreMessage && (
+        <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-900">
+          {restoreMessage}
+        </div>
+      )}
+
       {loading ? (
         <div className="py-12 text-center text-slate-600 dark:text-slate-300">Chargement de vos événements...</div>
       ) : !showForm && events.length === 0 ? (
@@ -358,7 +378,12 @@ export const OrganizerDashboard = () => {
       ) : !showForm ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {events.map((event) => (
-            <Card key={event.id} className="space-y-4 flex flex-col">
+            <Card key={event.id} className={`space-y-4 flex flex-col ${event.isDeleted ? 'opacity-60' : ''}`}>
+              {event.isDeleted && (
+                <div className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950 dark:text-red-200">
+                  ⚠️ Cet événement a été supprimé
+                </div>
+              )}
               <div>
                 <h2 className="text-xl font-bold text-slate-950 dark:text-white">{event.title}</h2>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{event.description}</p>
@@ -372,22 +397,35 @@ export const OrganizerDashboard = () => {
               </div>
 
               <div className="mt-auto flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleEdit(event)}
-                >
-                  Éditer
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleDelete(event.id)}
-                >
-                  Supprimer
-                </Button>
+                {!event.isDeleted ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleEdit(event)}
+                    >
+                      Éditer
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleDelete(event.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleRestore(event.id)}
+                  >
+                    Restaurer
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

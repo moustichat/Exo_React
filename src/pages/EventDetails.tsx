@@ -27,6 +27,7 @@ export const EventDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState('');
   const [existingPurchase, setExistingPurchase] = useState<number | null>(null);
+  const [showAlreadyPurchased, setShowAlreadyPurchased] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -49,9 +50,12 @@ export const EventDetails = () => {
         if (isAuthenticated) {
           const tickets = await ticketService.getUserTickets();
           const existingTicket = tickets.find((ticket: Ticket) => ticket.eventId === id);
-          setExistingPurchase(existingTicket?.quantity ?? null);
+          const quantity = existingTicket?.quantity ?? null;
+          setExistingPurchase(quantity);
+          setShowAlreadyPurchased(quantity !== null && quantity > 0);
         } else {
           setExistingPurchase(null);
+          setShowAlreadyPurchased(false);
         }
       } finally {
         if (isMounted) {
@@ -88,6 +92,7 @@ export const EventDetails = () => {
     }
 
     try {
+      const hadPurchaseBeforeThisAction = existingPurchase !== null && existingPurchase > 0;
       const ticket = await ticketService.buyTicket(event.id, quantity);
       const purchasedQty = (ticket as any).purchasedQuantity || ticket.quantity;
       setMessage(`Billet validé pour ${purchasedQty} place${purchasedQty > 1 ? 's' : ''}.`);
@@ -96,7 +101,12 @@ export const EventDetails = () => {
         : currentEvent,
       );
       setExistingPurchase(ticket.quantity);
+      setShowAlreadyPurchased(hadPurchaseBeforeThisAction);
       setQuantity(1);
+      if (!hadPurchaseBeforeThisAction) {
+        setTimeout(() => setShowAlreadyPurchased(true), 3000);
+      }
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Impossible de valider l\'achat.');
     }
@@ -167,6 +177,12 @@ export const EventDetails = () => {
             <h2 className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">Valider la réservation</h2>
           </div>
 
+          {event.isDeleted && (
+            <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-200 dark:bg-red-950 dark:text-red-200 dark:ring-red-900">
+              ⚠️ <strong>Cet événement a été supprimé par l'organisateur.</strong> Vous pouvez consulter vos billets achetés avant sa suppression, mais aucun nouvel achat n'est possible.
+            </div>
+          )}
+
           {message && (
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
               {message}
@@ -175,7 +191,7 @@ export const EventDetails = () => {
 
           {isAuthenticated ? (
             <div className="space-y-4">
-              {existingPurchase ? (
+              {existingPurchase && showAlreadyPurchased ? (
                 <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-900">
                   Tu as déjà acheté {existingPurchase} place{existingPurchase > 1 ? 's' : ''} pour cet événement.
                 </div>
@@ -190,7 +206,7 @@ export const EventDetails = () => {
                     size="sm"
                     className="h-10 w-10 p-0 text-lg"
                     onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                    disabled={quantity <= 1}
+                    disabled={quantity <= 1 || event.isDeleted}
                     aria-label="Diminuer le nombre de places"
                   >
                     −
@@ -204,6 +220,7 @@ export const EventDetails = () => {
                       max={seatsAvailable}
                       step={1}
                       value={quantity}
+                                            disabled={event.isDeleted}
                       onChange={(event) => {
                         const nextQuantity = Number(event.target.value);
                         if (!Number.isFinite(nextQuantity)) {
@@ -224,7 +241,7 @@ export const EventDetails = () => {
                     size="sm"
                     className="h-10 w-10 p-0 text-lg"
                     onClick={() => setQuantity((current) => Math.min(seatsAvailable, current + 1))}
-                    disabled={quantity >= seatsAvailable}
+                    disabled={quantity >= seatsAvailable || event.isDeleted}
                     aria-label="Augmenter le nombre de places"
                   >
                     +
@@ -236,7 +253,7 @@ export const EventDetails = () => {
                 Total à payer: <span className="font-bold text-slate-950 dark:text-white">{price * quantity} €</span>
               </div>
 
-              <Button className="w-full" onClick={handlePurchase} disabled={seatsAvailable <= 0}>
+              <Button className="w-full" onClick={handlePurchase} disabled={seatsAvailable <= 0 || event.isDeleted}>
                 Valider l’achat
               </Button>
             </div>

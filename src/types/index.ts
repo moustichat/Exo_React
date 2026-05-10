@@ -20,6 +20,7 @@ export interface Event {
   picture?: number | null;
   createdAt: string;
   updatedAt: string;
+  isDeleted?: boolean;
 }
 
 export interface Ticket {

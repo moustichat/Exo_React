@@ -43,9 +43,14 @@ export const TicketsList = () => {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {tickets.map((ticket) => (
-        <Card key={ticket.id} className="space-y-4">
+        <Card key={ticket.id} className={`space-y-4 ${ticket.event?.isDeleted ? 'opacity-75' : ''}`}>
           {ticket.event && (
             <>
+              {ticket.event.isDeleted && (
+                <div className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950 dark:text-red-200">
+                  🗑️ Événement supprimé
+                </div>
+              )}
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-300">Billet acheté</p>
                 <h2 className="mt-2 text-xl font-bold text-slate-950 dark:text-white">{ticket.event.title}</h2>
