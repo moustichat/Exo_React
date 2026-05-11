@@ -36,7 +36,7 @@ export const Header = () => {
             <>
               {(user?.role === 'ORGANIZER' || user?.role === 'ADMIN') && (
                 <NavLink className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? 'bg-slate-950 text-white dark:bg-amber-400 dark:text-slate-950' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`} to="/organizer">
-                  Créer un événement
+                  Evénements
                 </NavLink>
               )}
               <NavLink className={({ isActive }) => `rounded-full px-4 py-2 text-sm font-medium transition ${isActive ? 'bg-slate-950 text-white dark:bg-amber-400 dark:text-slate-950' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`} to="/account">

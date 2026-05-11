@@ -21,16 +21,18 @@ export interface Event {
   createdAt: string;
   updatedAt: string;
   isDeleted?: boolean;
+  tickets?: Ticket[];
 }
 
 export interface Ticket {
-  id: string;
+  id: number;
   eventId: string;
   userId: string;
   purchaseDate: string;
   quantity: number;
   totalPrice: number;
   event?: Event;
+  user?: SessionUser;
 }
 
 export interface SessionUser {

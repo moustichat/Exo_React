@@ -143,6 +143,16 @@ export const ticketService = {
     const payload = await readJson<{ success: boolean; data: { ticket: Ticket } }>(response, 'Failed to buy tickets');
     return payload.data.ticket;
   },
+
+  async removeTicketQuantity(ticketId: number, quantity: number): Promise<void> {
+    const response = await fetch(`/api/v1/tickets/${ticketId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ quantity }),
+    });
+    await readJson(response, 'Failed to remove tickets');
+  },
 };
 
 export const profileService = {
