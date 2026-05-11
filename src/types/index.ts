@@ -31,6 +31,7 @@ export interface Ticket {
   purchaseDate: string;
   quantity: number;
   totalPrice: number;
+  purchasedQuantity?: number;
   event?: Event;
   user?: SessionUser;
 }

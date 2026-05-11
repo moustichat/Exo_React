@@ -94,7 +94,7 @@ export const EventDetails = () => {
     try {
       const hadPurchaseBeforeThisAction = existingPurchase !== null && existingPurchase > 0;
       const ticket = await ticketService.buyTicket(event.id, quantity);
-      const purchasedQty = (ticket as any).purchasedQuantity || ticket.quantity;
+      const purchasedQty = ticket.purchasedQuantity ?? ticket.quantity;
       setMessage(`Billet validé pour ${purchasedQty} place${purchasedQty > 1 ? 's' : ''}.`);
       setEvent((currentEvent) => currentEvent
         ? { ...currentEvent, seats_available: Math.max(0, (currentEvent.seats_available ?? 0) - quantity) }
