@@ -1,57 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { TicketsList } from '../components/tickets/TicketsList';
+import { ProfileForm } from '../components/forms/ProfileForm';
+import { PasswordForm } from '../components/forms/PasswordForm';
+import { OrganizerUpgradeCard } from '../components/forms/OrganizerUpgradeCard';
 
 export const Account = () => {
   const { user, updateProfile, updatePassword, becomeOrganizer } = useAuth();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [nextPassword, setNextPassword] = useState('');
-  const [profileMessage, setProfileMessage] = useState('');
-  const [passwordMessage, setPasswordMessage] = useState('');
-  const [organizerMessage, setOrganizerMessage] = useState('');
+  const [initialName, setInitialName] = useState('');
+  const [initialEmail, setInitialEmail] = useState('');
 
   useEffect(() => {
-    setName(user?.name ?? '');
-    setEmail(user?.email ?? '');
+    setInitialName(user?.name ?? '');
+    setInitialEmail(user?.email ?? '');
   }, [user]);
-
-  const handleProfileSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      setProfileMessage('');
-      await updateProfile({ name, email });
-      setProfileMessage('Paramètres enregistrés.');
-    } catch (error) {
-      setProfileMessage(error instanceof Error ? error.message : 'Impossible de sauvegarder le profil.');
-    }
-  };
-
-  const handlePasswordSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      setPasswordMessage('');
-      await updatePassword(currentPassword, nextPassword);
-      setCurrentPassword('');
-      setNextPassword('');
-      setPasswordMessage('Mot de passe mis à jour.');
-    } catch (error) {
-      setPasswordMessage(error instanceof Error ? error.message : 'Impossible de changer le mot de passe.');
-    }
-  };
-
-  const handleBecomeOrganizer = async () => {
-    try {
-      setOrganizerMessage('');
-      await becomeOrganizer();
-      setOrganizerMessage('Ton compte est maintenant en mode organisateur.');
-    } catch (error) {
-      setOrganizerMessage(error instanceof Error ? error.message : 'Impossible de passer en mode organisateur.');
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -77,35 +40,11 @@ export const Account = () => {
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Informations visibles dans ton espace utilisateur.</p>
           </div>
 
-          {profileMessage && (
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
-              {profileMessage}
-            </div>
-          )}
-
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Nom d'utilisateur</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-300"
-              />
-            </label>
-
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Email</span>
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-300"
-              />
-            </label>
-
-            <Button type="submit">Enregistrer</Button>
-          </form>
+          <ProfileForm 
+            initialName={initialName} 
+            initialEmail={initialEmail}
+            onSubmit={(name, email) => updateProfile({ name, email })}
+          />
         </Card>
 
         <Card className="space-y-5">
@@ -114,58 +53,12 @@ export const Account = () => {
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Change ton mot de passe quand tu veux.</p>
           </div>
 
-          {passwordMessage && (
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
-              {passwordMessage}
-            </div>
-          )}
-
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Mot de passe actuel</span>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-300"
-              />
-            </label>
-
-            <label className="block space-y-2">
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Nouveau mot de passe</span>
-              <input
-                type="password"
-                value={nextPassword}
-                onChange={(event) => setNextPassword(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:border-amber-300"
-              />
-            </label>
-
-            <Button type="submit" variant="secondary">Modifier le mot de passe</Button>
-          </form>
+          <PasswordForm onSubmit={updatePassword} />
         </Card>
 
         {user?.role === 'USER' && (
-          <Card className="space-y-5">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-950 dark:text-white">Espace organisateur</h2>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                Passe ton compte en organisateur pour créer des évènements.
-              </p>
-            </div>
-
-            {organizerMessage && (
-              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
-                {organizerMessage}
-              </div>
-            )}
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              Active le mode organisateur pour accéder à la création d'événements.
-            </div>
-            <Button type="button" onClick={handleBecomeOrganizer}>
-              Devenir organisateur
-            </Button>
+          <Card>
+            <OrganizerUpgradeCard onBecomeOrganizer={becomeOrganizer} />
           </Card>
         )}
       </div>

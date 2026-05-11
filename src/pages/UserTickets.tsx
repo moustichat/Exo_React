@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TicketsList } from '../components/tickets/TicketsList';
 
+
 export const UserTickets = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -10,12 +11,6 @@ export const UserTickets = () => {
   useEffect(() => {
     if (!user) {
       navigate('/login', { replace: true, state: { from: '/tickets' } });
-      return;
-    }
-
-    // Allow regular users and organizers/admins to view their tickets
-    if (!['USER', 'ORGANIZER', 'ADMIN'].includes(user.role)) {
-      navigate('/');
       return;
     }
   }, [user, navigate]);

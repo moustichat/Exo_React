@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
+import { PurchaseForm } from '../components/tickets/PurchaseForm';
 import { useAuth } from '../context/AuthContext';
 import { eventService, ticketService } from '../services';
+import { useFormMessage } from '../hooks/useFormMessage';
 import type { Event, Ticket } from '../types';
 
 function formatDate(value: string) {
@@ -24,10 +26,9 @@ export const EventDetails = () => {
   const { isAuthenticated } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
-  const [message, setMessage] = useState('');
   const [existingPurchase, setExistingPurchase] = useState<number | null>(null);
   const [showAlreadyPurchased, setShowAlreadyPurchased] = useState(false);
+  const { message, setMessage, setMessageWithAutoReset } = useFormMessage();
 
   useEffect(() => {
     let isMounted = true;
@@ -69,24 +70,13 @@ export const EventDetails = () => {
     return () => {
       isMounted = false;
     };
-  }, [id]);
-
-  useEffect(() => {
-    if (!event) {
-      return;
-    }
-
-    const seatsAvailable = event.seats_available ?? event.total_seats ?? 0;
-    if (quantity > seatsAvailable) {
-      setQuantity(Math.max(1, seatsAvailable));
-    }
-  }, [event, quantity]);
+  }, [id, isAuthenticated]);
 
   const handleProtectedAction = () => {
     navigate('/login', { state: { from: location.pathname } });
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (quantity: number) => {
     if (!event) {
       return;
     }
@@ -95,25 +85,23 @@ export const EventDetails = () => {
       const hadPurchaseBeforeThisAction = existingPurchase !== null && existingPurchase > 0;
       const ticket = await ticketService.buyTicket(event.id, quantity);
       const purchasedQty = ticket.purchasedQuantity ?? ticket.quantity;
-      setMessage(`Billet validé pour ${purchasedQty} place${purchasedQty > 1 ? 's' : ''}.`);
+      setMessageWithAutoReset(`Billet validé pour ${purchasedQty} place${purchasedQty > 1 ? 's' : ''}.`);
       setEvent((currentEvent) => currentEvent
         ? { ...currentEvent, seats_available: Math.max(0, (currentEvent.seats_available ?? 0) - quantity) }
         : currentEvent,
       );
       setExistingPurchase(ticket.quantity);
       setShowAlreadyPurchased(hadPurchaseBeforeThisAction);
-      setQuantity(1);
       if (!hadPurchaseBeforeThisAction) {
         setTimeout(() => setShowAlreadyPurchased(true), 3000);
       }
-      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Impossible de valider l\'achat.');
     }
   };
 
   if (loading) {
-    return <div className="py-12 text-center text-slate-600 dark:text-slate-300">Chargement de l’évènement...</div>;
+    return <div className="py-12 text-center text-slate-600 dark:text-slate-300">Chargement de l'évènement...</div>;
   }
 
   if (!event) {
@@ -183,80 +171,20 @@ export const EventDetails = () => {
             </div>
           )}
 
-          {message && (
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
-              {message}
-            </div>
-          )}
-
           {isAuthenticated ? (
-            <div className="space-y-4">
+            <>
               {existingPurchase && showAlreadyPurchased ? (
                 <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950 dark:text-emerald-200 dark:ring-emerald-900">
                   Tu as déjà acheté {existingPurchase} place{existingPurchase > 1 ? 's' : ''} pour cet événement.
                 </div>
               ) : null}
-
-              <div className="space-y-2">
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Nombre de places</span>
-                <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-950">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-10 w-10 p-0 text-lg"
-                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                    disabled={quantity <= 1 || event.isDeleted}
-                    aria-label="Diminuer le nombre de places"
-                  >
-                    −
-                  </Button>
-
-                  <div className="flex flex-col items-center text-center">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Places à acheter</p>
-                    <input
-                      type="number"
-                      min={1}
-                      max={seatsAvailable}
-                      step={1}
-                      value={quantity}
-                                            disabled={event.isDeleted}
-                      onChange={(event) => {
-                        const nextQuantity = Number(event.target.value);
-                        if (!Number.isFinite(nextQuantity)) {
-                          setQuantity(1);
-                          return;
-                        }
-
-                        setQuantity(Math.min(seatsAvailable, Math.max(1, nextQuantity)));
-                      }}
-                      className="mt-1 w-28 border-0 bg-transparent text-center text-4xl font-black text-slate-950 outline-none [appearance:textfield] dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                      aria-label="Nombre de places à acheter"
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-10 w-10 p-0 text-lg"
-                    onClick={() => setQuantity((current) => Math.min(seatsAvailable, current + 1))}
-                    disabled={quantity >= seatsAvailable || event.isDeleted}
-                    aria-label="Augmenter le nombre de places"
-                  >
-                    +
-                  </Button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700">
-                Total à payer: <span className="font-bold text-slate-950 dark:text-white">{price * quantity} €</span>
-              </div>
-
-              <Button className="w-full" onClick={handlePurchase} disabled={seatsAvailable <= 0 || event.isDeleted}>
-                Valider l’achat
-              </Button>
-            </div>
+              <PurchaseForm 
+                event={event} 
+                onPurchase={handlePurchase} 
+                disabled={event.isDeleted ?? false} 
+                message={message} 
+              />
+            </>
           ) : (
             <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
               <p>Connecte-toi pour acheter ce billet. Tu pourras ensuite choisir le nombre de places à réserver.</p>
